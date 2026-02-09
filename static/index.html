@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Android Pro v3</title>
+    <style>
+        body { background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #1c1c1e; padding: 30px; border-radius: 24px; width: 360px; border: 1px solid #333; }
+        h2 { margin: 0 0 20px; text-align: center; color: #007aff; }
+        label { display: block; font-size: 11px; color: #888; margin: 10px 0 5px; text-transform: uppercase; }
+        input, select { background: #2c2c2e; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 12px; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 10px; }
+        button { background: #007aff; color: #fff; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .btn-pair { background: #333; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Android Link</h2>
+        <label>IP Телефона</label>
+        <input type="text" id="ip">
+        <div style="display:flex; gap:10px;"><input type="text" id="p_port" placeholder="Pair Port"><input type="text" id="p_code" placeholder="Code"></div>
+        <button class="btn-pair" onclick="pair()">1. Pairing</button>
+        <label>Качество</label>
+        <select id="res"><option value="360x640">Low (Fast)</option><option value="540x960" selected>Medium (Optimal)</option><option value="720x1280">High (HD)</option></select>
+        <input type="text" id="port" placeholder="Connect Port">
+        <button onclick="connect()">2. Connect ADB</button>
+        <button id="start" onclick="start()" style="display:none; background:#28a745">3. Start Pro Stream</button>
+    </div>
+    <script>
+        fetch('/config').then(r=>r.json()).then(d=>{ document.getElementById('ip').value=d.ip; document.getElementById('port').value=d.port; });
+        async function pair() {
+            const d = {ip:document.getElementById('ip').value, port:document.getElementById('p_port').value, code:document.getElementById('p_code').value};
+            const r = await fetch('/pair', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)});
+            alert((await r.json()).msg);
+        }
+        async function connect() {
+            const d = {ip:document.getElementById('ip').value, port:document.getElementById('port').value};
+            const r = await fetch('/connect', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)});
+            const res = await r.json();
+            if(res.ok) document.getElementById('start').style.display='block'; else alert(res.msg);
+        }
+        function start() {
+            const res = document.getElementById('res').value;
+            window.open(`/stream-ui?res=${res}`, '', 'width=450,height=850');
+        }
+    </script>
+</body>
+</html>

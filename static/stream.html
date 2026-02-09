@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Android Realtime</title>
+    <style>body{margin:0;background:#000;display:flex;justify-content:center;overflow:hidden;}canvas{height:100vh;cursor:crosshair;}</style>
+    <script src="/static/jsmpeg.min.js"></script>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const host = location.host;
+        const canvas = document.getElementById('canvas');
+        
+        // Видео поток через JSMpeg (самый быстрый!)
+        const player = new JSMpeg.Player(`ws://${host}/ws-video?res=${params.get('res')}`, {
+            canvas: canvas, autoplay: true, audio: false, loop: false
+        });
+
+        const iWs = new WebSocket(`ws://${host}/ws-input`);
+        let size = {width:1080, height:1920};
+        fetch('/size').then(r=>r.json()).then(d=>size=d);
+
+        // УПРАВЛЕНИЕ МЫШЬЮ (Тапы и Свайпы)
+        let x1, y1, t1;
+        canvas.onmousedown = (e) => { x1=e.clientX; y1=e.clientY; t1=Date.now(); };
+        canvas.onmouseup = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const getX = (c) => Math.floor((c-rect.left)/rect.width*size.width);
+            const getY = (c) => Math.floor((c-rect.top)/rect.height*size.height);
+            const dist = Math.sqrt((e.clientX-x1)**2 + (e.clientY-y1)**2);
+            if(dist < 10) iWs.send(JSON.stringify({type:'tap', x:getX(e.clientX), y:getY(e.clientY)}));
+            else iWs.send(JSON.stringify({type:'swipe', x1:getX(x1), y1:getY(y1), x2:getX(e.clientX), y2:getY(e.clientY), ms:Date.now()-t1}));
+        };
+
+        // СКРОЛЛ
+        window.onwheel = (e) => iWs.send(JSON.stringify({type:'key', code: e.deltaY > 0 ? 20 : 19}));
+
+        // КЛАВИАТУРА И ТЕКСТ
+        window.onkeydown = (e) => {
+            if(e.key === 'Backspace') iWs.send(JSON.stringify({type:'key', code:67}));
+            else if(e.key === 'Enter') iWs.send(JSON.stringify({type:'key', code:66}));
+            else if(e.key === 'Escape') iWs.send(JSON.stringify({type:'key', code:4}));
+            else if(e.key.length === 1) iWs.send(JSON.stringify({type:'text', val: e.key}));
+        };
+    </script>
+</body>
+</html>

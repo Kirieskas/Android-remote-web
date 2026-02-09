@@ -6,3 +6,7 @@
 
 
 I tried making a script to control the phone through a website, but I only got a very crude version. It has automatic installations of everything you need, and the website opens at (http://your-local-ip:8888). Connect to the phone via Wi-Fi debugging using a code; anyone who needs to figure it out can figure it out! WORKS ONLY ON ANDROID!!!
+
+
+
+WORK ONLY ON WINDOWS
